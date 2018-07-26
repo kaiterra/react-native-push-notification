@@ -3,6 +3,7 @@ package com.dieam.reactnativepushnotification.modules;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -12,6 +13,9 @@ import com.alibaba.sdk.android.push.CommonCallback;
 import com.alibaba.sdk.android.push.noonesdk.PushServiceFactory;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.google.android.gms.iid.InstanceID;
+
+import java.io.IOException;
+import java.lang.ref.WeakReference;
 
 import static com.dieam.reactnativepushnotification.modules.RNPushNotification.LOG_TAG;
 
@@ -27,10 +31,20 @@ public class RNPushNotificationRegistrationService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         Boolean USE_ALIYUN = true;
         if (USE_ALIYUN) {
-            getAliyunToken(getApplicationContext());
+            try {
+                getAliyunToken(getApplicationContext());
+            }
+            catch (Exception ex) {
+                handleRegistrationFailure("Aliyun registration failed getting application context");
+            }
         }
         else {
-            getFCMToken(intent);
+            try {
+                getFCMToken(intent.getStringExtra("senderID"));
+            }
+            catch (Exception ex) {
+                handleRegistrationFailure("FCM registration failed with intent " + intent);
+            }
         }
 
         return START_NOT_STICKY;
@@ -42,17 +56,13 @@ public class RNPushNotificationRegistrationService extends Service {
       return null;
     }
 
-    private void getFCMToken(Intent intent) {
-        try {
-            String SenderID = intent.getStringExtra("senderID");
-            InstanceID instanceID = InstanceID.getInstance(this);
-            String token = instanceID.getToken(SenderID,
-              GoogleCloudMessaging.INSTANCE_ID_SCOPE, null);
-            sendRegistrationToken(token);
-        } catch (Exception e) {
-            Log.e(LOG_TAG, TAG + " failed to get FCM token with intent " + intent, e);
-            stopSelf();
-        }
+    /**
+     * Register device with Firebase cloud messaging
+     * @param senderID
+     */
+    private void getFCMToken(String senderID) {
+        RegisterFCMAsyncTask myTask = new RegisterFCMAsyncTask(this, senderID);
+        myTask.execute();
     }
 
     /**
@@ -64,21 +74,51 @@ public class RNPushNotificationRegistrationService extends Service {
         pushService.register(applicationContext, new CommonCallback() {
             @Override
             public void onSuccess(String response) {
-                Log.d("ALIYUN PUSH", "init cloudchannel success.  DeviceID: " + pushService.getDeviceId());
                 sendRegistrationToken(pushService.getDeviceId());
             }
             @Override
             public void onFailed(String errorCode, String errorMessage) {
-                Log.d("ALIYUN PUSH", "init cloudchannel failed -- errorcode:" + errorCode + " -- errorMessage:" + errorMessage);
-                stopSelf();
+                handleRegistrationFailure("init cloudchannel failed -- errorcode:" + errorCode + " -- errorMessage:" + errorMessage);
             }
         });
     }
 
-    private void sendRegistrationToken(String token) {
+    public void sendRegistrationToken(String token) {
+        Log.d(LOG_TAG, TAG + " Success: " + token);
         Intent intent = new Intent(this.getPackageName() + ".RNPushNotificationRegisteredToken");
         intent.putExtra("token", token);
         sendBroadcast(intent);
         stopSelf();
+    }
+
+    public void handleRegistrationFailure(String errorMsg) {
+        Log.d(LOG_TAG, TAG + " " + errorMsg);
+        stopSelf();
+    }
+
+    private static class RegisterFCMAsyncTask extends AsyncTask<Void, Void, String> {
+
+        private WeakReference<RNPushNotificationRegistrationService> serviceWeakReference;
+        private String SenderID;
+
+        RegisterFCMAsyncTask(RNPushNotificationRegistrationService registrationService,
+                             String senderID) {
+            serviceWeakReference = new WeakReference<>(registrationService);
+            SenderID = senderID;
+        }
+
+        @Override
+        protected String doInBackground(Void... params) {
+            RNPushNotificationRegistrationService service = serviceWeakReference.get();
+            try {
+                InstanceID instanceID = InstanceID.getInstance(service);
+                String token = instanceID.getToken(SenderID,
+                  GoogleCloudMessaging.INSTANCE_ID_SCOPE, null);
+                service.sendRegistrationToken(token);
+            } catch (Exception ex) {
+                service.handleRegistrationFailure("failed to get FCM token");
+            }
+            return null;
+        }
     }
 }
