@@ -29,16 +29,8 @@ public class RNPushNotificationRegistrationService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Boolean USE_ALIYUN = true;
-        if (USE_ALIYUN) {
-            try {
-                getAliyunToken(getApplicationContext());
-            }
-            catch (Exception ex) {
-                handleRegistrationFailure("Aliyun registration failed getting application context");
-            }
-        }
-        else {
+        boolean USE_GOOGLE = RNPushNotificationRegistrationService.checkPlayServicesAvailable(this);
+        if (USE_GOOGLE) {
             try {
                 getFCMToken(intent.getStringExtra("senderID"));
             }
@@ -46,7 +38,14 @@ public class RNPushNotificationRegistrationService extends Service {
                 handleRegistrationFailure("FCM registration failed with intent " + intent);
             }
         }
-
+        else {
+            try {
+                getAliyunToken(getApplicationContext());
+            }
+            catch (Exception ex) {
+                handleRegistrationFailure("Aliyun registration failed getting application context");
+            }
+        }
         return START_NOT_STICKY;
     }
 
