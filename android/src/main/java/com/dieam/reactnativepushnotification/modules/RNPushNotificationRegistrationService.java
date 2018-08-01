@@ -11,10 +11,10 @@ import android.util.Log;
 import com.alibaba.sdk.android.push.CloudPushService;
 import com.alibaba.sdk.android.push.CommonCallback;
 import com.alibaba.sdk.android.push.noonesdk.PushServiceFactory;
-import com.google.android.gms.gcm.GoogleCloudMessaging;
-import com.google.android.gms.iid.InstanceID;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.firebase.iid.FirebaseInstanceId;
 
-import java.io.IOException;
 import java.lang.ref.WeakReference;
 
 import static com.dieam.reactnativepushnotification.modules.RNPushNotification.LOG_TAG;
@@ -111,14 +111,32 @@ public class RNPushNotificationRegistrationService extends Service {
         protected String doInBackground(Void... params) {
             RNPushNotificationRegistrationService service = serviceWeakReference.get();
             try {
-                InstanceID instanceID = InstanceID.getInstance(service);
-                String token = instanceID.getToken(SenderID,
-                  GoogleCloudMessaging.INSTANCE_ID_SCOPE, null);
+                String token = FirebaseInstanceId.getInstance().getToken();
                 service.sendRegistrationToken(token);
             } catch (Exception ex) {
                 service.handleRegistrationFailure("failed to get FCM token");
             }
             return null;
         }
+    }
+
+    /**
+     * Check to see if Google Play Services are available, e.g. for determining
+     * which push provider to use
+     * @param context a Context to feed to the Google SDK method
+     * @return whether or not Play Services are available
+     */
+    public static boolean checkPlayServicesAvailable(Context context) {
+        GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
+        int resultCode = apiAvailability.isGooglePlayServicesAvailable(context);
+        if (resultCode != ConnectionResult.SUCCESS) {
+            if (apiAvailability.isUserResolvableError(resultCode)) {
+                Log.i(TAG, "Google Play Services availability check returned negative with code: " + resultCode);
+            } else {
+                Log.i(TAG, "Google Play Services availability check: this device is not supported.");
+            }
+            return false;
+        }
+        return true;
     }
 }
