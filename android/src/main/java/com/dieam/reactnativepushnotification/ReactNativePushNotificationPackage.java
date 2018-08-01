@@ -11,10 +11,18 @@ import java.util.Collections;
 import java.util.List;
 
 public class ReactNativePushNotificationPackage implements ReactPackage {
+
+    private boolean mUseAliyun = false;
+
+    public ReactNativePushNotificationPackage(boolean useAliyun) {
+        super();
+        mUseAliyun = useAliyun;
+    }
+
     @Override
     public List<NativeModule> createNativeModules(
             ReactApplicationContext reactContext) {
-        return Collections.<NativeModule>singletonList(new RNPushNotification(reactContext));
+        return Collections.<NativeModule>singletonList(new RNPushNotification(reactContext, mUseAliyun));
     }
 
     public List<Class<? extends JavaScriptModule>> createJSModules() {

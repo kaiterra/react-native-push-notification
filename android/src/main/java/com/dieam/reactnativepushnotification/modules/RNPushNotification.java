@@ -34,8 +34,9 @@ public class RNPushNotification extends ReactContextBaseJavaModule implements Ac
     private RNPushNotificationHelper mRNPushNotificationHelper;
     private final Random mRandomNumberGenerator = new Random(System.currentTimeMillis());
     private RNPushNotificationJsDelivery mJsDelivery;
+    private boolean mUseAliyun;
 
-    public RNPushNotification(ReactApplicationContext reactContext) {
+    public RNPushNotification(ReactApplicationContext reactContext, boolean useAliyun) {
         super(reactContext);
 
         reactContext.addActivityEventListener(this);
@@ -45,6 +46,8 @@ public class RNPushNotification extends ReactContextBaseJavaModule implements Ac
         mRNPushNotificationHelper = new RNPushNotificationHelper(applicationContext);
         // This is used to delivery callbacks to JS
         mJsDelivery = new RNPushNotificationJsDelivery(reactContext);
+
+        mUseAliyun = useAliyun;
 
         registerNotificationsRegistration();
     }
@@ -119,10 +122,11 @@ public class RNPushNotification extends ReactContextBaseJavaModule implements Ac
     public void requestPermissions(String senderID) {
         ReactContext reactContext = getReactApplicationContext();
 
-        Intent GCMService = new Intent(reactContext, RNPushNotificationRegistrationService.class);
+        Intent PushService = new Intent(reactContext, RNPushNotificationRegistrationService.class);
 
-        GCMService.putExtra("senderID", senderID);
-        reactContext.startService(GCMService);
+        PushService.putExtra("senderID", senderID);
+        PushService.putExtra("useAliyun", mUseAliyun);
+        reactContext.startService(PushService);
     }
 
     @ReactMethod
