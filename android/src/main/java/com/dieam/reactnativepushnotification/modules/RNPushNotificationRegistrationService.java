@@ -73,7 +73,7 @@ public class RNPushNotificationRegistrationService extends Service {
         pushService.register(applicationContext, new CommonCallback() {
             @Override
             public void onSuccess(String response) {
-                sendRegistrationToken(pushService.getDeviceId());
+                sendRegistrationToken(pushService.getDeviceId(), "ACMP");
             }
             @Override
             public void onFailed(String errorCode, String errorMessage) {
@@ -82,10 +82,11 @@ public class RNPushNotificationRegistrationService extends Service {
         });
     }
 
-    public void sendRegistrationToken(String token) {
+    public void sendRegistrationToken(String token, String provider) {
         Log.d(LOG_TAG, TAG + " Success: " + token);
         Intent intent = new Intent(this.getPackageName() + ".RNPushNotificationRegisteredToken");
         intent.putExtra("token", token);
+        intent.putExtra("provider", provider);
         sendBroadcast(intent);
         stopSelf();
     }
@@ -111,7 +112,7 @@ public class RNPushNotificationRegistrationService extends Service {
             RNPushNotificationRegistrationService service = serviceWeakReference.get();
             try {
                 String token = FirebaseInstanceId.getInstance().getToken();
-                service.sendRegistrationToken(token);
+                service.sendRegistrationToken(token, "FCM");
             } catch (Exception ex) {
                 service.handleRegistrationFailure("failed to get FCM token");
             }

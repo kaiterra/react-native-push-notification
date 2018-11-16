@@ -80,8 +80,10 @@ public class RNPushNotification extends ReactContextBaseJavaModule implements Ac
             @Override
             public void onReceive(Context context, Intent intent) {
                 String token = intent.getStringExtra("token");
+                String provider = intent.getStringExtra("provider");
                 WritableMap params = Arguments.createMap();
                 params.putString("deviceToken", token);
+                params.putString("provider", provider);
 
                 mJsDelivery.sendEvent("remoteNotificationsRegistered", params);
             }

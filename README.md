@@ -147,8 +147,10 @@ var PushNotification = require('react-native-push-notification');
 PushNotification.configure({
 
     // (optional) Called when Token is generated (iOS and Android)
-    onRegister: function(token) {
-        console.log( 'TOKEN:', token );
+    onRegister: function(registrationParams) {
+        console.log( 'TOKEN:', registrationParams.token );
+        console.log( 'PROVIDER:', registrationParams.provider );
+        console.log( 'OS:',  registrationParams.os );
     },
 
     // (required) Called when a remote or local notification is opened or received

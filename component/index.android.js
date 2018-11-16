@@ -83,7 +83,7 @@ NotificationsComponent.prototype.addEventListener = function(type: string, handl
 		listener = DeviceEventEmitter.addListener(
 			NOTIF_REGISTER_EVENT,
 			function(registrationInfo) {
-				handler(registrationInfo.deviceToken);
+				handler(registrationInfo.deviceToken, registrationInfo.provider);
 			}
 		);
 	} else if (type === 'remoteFetch') {

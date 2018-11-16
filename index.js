@@ -191,10 +191,11 @@ Notifications.localNotificationSchedule = function(details: Object) {
 };
 
 /* Internal Functions */
-Notifications._onRegister = function(token: String) {
+Notifications._onRegister = function(token: String, provider: String) {
 	if ( this.onRegister !== false ) {
 		this.onRegister({
 			token: token,
+			provider: ((Platform.OS == 'ios') ? 'APNS' : provider),
 			os: Platform.OS
 		});
 	}
