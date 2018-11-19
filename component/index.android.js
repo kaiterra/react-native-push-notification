@@ -10,6 +10,7 @@ var _notifHandlers = new Map();
 
 var DEVICE_NOTIF_EVENT = 'remoteNotificationReceived';
 var NOTIF_REGISTER_EVENT = 'remoteNotificationsRegistered';
+var NOTIF_REGISTRATION_FAILED_EVENT = 'remoteNotificationsRegistrationFailed';
 var REMOTE_FETCH_EVENT = 'remoteFetch';
 
 var NotificationsComponent = function() {
@@ -83,7 +84,16 @@ NotificationsComponent.prototype.addEventListener = function(type: string, handl
 		listener = DeviceEventEmitter.addListener(
 			NOTIF_REGISTER_EVENT,
 			function(registrationInfo) {
-				handler(registrationInfo.deviceToken, registrationInfo.provider);
+				handler(registrationInfo.deviceToken,
+					registrationInfo.provider);
+			}
+		);
+	} else if (type === 'registrationFailed') {
+		listener = DeviceEventEmitter.addListener(
+			NOTIF_REGISTRATION_FAILED_EVENT,
+			function(registrationInfo) {
+				handler(registrationInfo.message,
+					registrationInfo.provider);
 			}
 		);
 	} else if (type === 'remoteFetch') {

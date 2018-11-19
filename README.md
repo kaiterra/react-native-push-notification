@@ -153,6 +153,12 @@ PushNotification.configure({
         console.log( 'OS:',  registrationParams.os );
     },
 
+    // (optional) Called when an error is thrown during Token generation (Android only)
+    onRegistrationFailed: function(registrationParams) {
+        console.log( 'MESSAGE:', registrationParams.message );
+        console.log( 'PROVIDER:', registrationParams.provider );
+    },
+
     // (required) Called when a remote or local notification is opened or received
     onNotification: function(notification) {
         console.log( 'NOTIFICATION:', notification );

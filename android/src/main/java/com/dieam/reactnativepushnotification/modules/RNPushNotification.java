@@ -90,6 +90,23 @@ public class RNPushNotification extends ReactContextBaseJavaModule implements Ac
         }, intentFilter);
     }
 
+    private void registerNotificationsRegistrationFailure() {
+        IntentFilter intentFilter = new IntentFilter(getReactApplicationContext().getPackageName() + ".RNPushNotificationRegistrationFailure");
+
+        getReactApplicationContext().registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String message = intent.getStringExtra("message");
+                String provider = intent.getStringExtra("provider");
+                WritableMap params = Arguments.createMap();
+                params.putString("message", message);
+                params.putString("provider", provider);
+
+                mJsDelivery.sendEvent("remoteNotificationsRegistrationFailed", params);
+            }
+        }, intentFilter);
+    }
+
     private void registerNotificationsReceiveNotificationActions(ReadableArray actions) {
         IntentFilter intentFilter = new IntentFilter();
         // Add filter for each actions.
