@@ -23,6 +23,9 @@ public class RNPushNotificationRegistrationService extends Service {
 
     private static final String TAG = "RNPushNotification";
 
+    private static final String PROVIDER_FCM = "google";
+    private static final String PROVIDER_ALIYUN = "aliyun";
+
     public RNPushNotificationRegistrationService() {
       super();
     }
@@ -35,7 +38,7 @@ public class RNPushNotificationRegistrationService extends Service {
                 getAliyunToken(getApplicationContext());
             }
             catch (Exception ex) {
-                handleRegistrationFailure("Aliyun registration failed getting application context", "ACMP");
+                handleRegistrationFailure("Aliyun registration failed getting application context", PROVIDER_ALIYUN);
             }
         }
         else {
@@ -43,7 +46,7 @@ public class RNPushNotificationRegistrationService extends Service {
                 getFCMToken(intent.getStringExtra("senderID"));
             }
             catch (Exception ex) {
-                handleRegistrationFailure("FCM registration failed with intent " + intent, "ACMP");
+                handleRegistrationFailure("FCM registration failed with intent " + intent, PROVIDER_ALIYUN);
             }
         }
         return START_NOT_STICKY;
@@ -73,11 +76,11 @@ public class RNPushNotificationRegistrationService extends Service {
         pushService.register(applicationContext, new CommonCallback() {
             @Override
             public void onSuccess(String response) {
-                sendRegistrationToken(pushService.getDeviceId(), "ACMP");
+                sendRegistrationToken(pushService.getDeviceId(), PROVIDER_ALIYUN);
             }
             @Override
             public void onFailed(String errorCode, String errorMessage) {
-                handleRegistrationFailure("init cloudchannel failed -- errorcode:" + errorCode + " -- errorMessage:" + errorMessage, "ACMP");
+                handleRegistrationFailure("init cloudchannel failed -- errorcode:" + errorCode + " -- errorMessage:" + errorMessage, PROVIDER_ALIYUN);
             }
         });
     }
@@ -116,9 +119,9 @@ public class RNPushNotificationRegistrationService extends Service {
             RNPushNotificationRegistrationService service = serviceWeakReference.get();
             try {
                 String token = FirebaseInstanceId.getInstance().getToken();
-                service.sendRegistrationToken(token, "FCM");
+                service.sendRegistrationToken(token, PROVIDER_FCM);
             } catch (Exception ex) {
-                service.handleRegistrationFailure("Failed to get FCM token with exception: " + ex.getMessage(), "FCM");
+                service.handleRegistrationFailure("Failed to get FCM token with exception: " + ex.getMessage(), PROVIDER_FCM);
             }
             return null;
         }
