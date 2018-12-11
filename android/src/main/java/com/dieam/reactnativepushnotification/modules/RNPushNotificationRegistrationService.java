@@ -72,17 +72,36 @@ public class RNPushNotificationRegistrationService extends Service {
      * @param applicationContext
      */
     private void getAliyunToken(Context applicationContext) {
-        final CloudPushService pushService = PushServiceFactory.getCloudPushService();
-        pushService.register(applicationContext, new CommonCallback() {
-            @Override
-            public void onSuccess(String response) {
-                sendRegistrationToken(pushService.getDeviceId(), PROVIDER_ALIYUN);
+        String deviceID = PushServiceFactory.getCloudPushService().getDeviceId();
+        if (deviceID!=null && deviceID.length()>0) {
+            sendRegistrationToken(deviceID, PROVIDER_ALIYUN);
+        } else {
+            try {
+                // Since the token may not be received yet, start a thread to check for it
+                // and send it to RN context when ready
+                class AliyunTokenMonitor implements Runnable {
+                    public void run() {
+                        boolean found = false;
+                        while(!found) {
+                            try {
+                                Thread.sleep(1000);
+                                String deviceID = PushServiceFactory.getCloudPushService().getDeviceId();
+                                if (deviceID != null && deviceID.length() > 0) {
+                                    sendRegistrationToken(deviceID, PROVIDER_ALIYUN);
+                                    found = true;
+                                }
+                            } catch (Exception e) {
+                                handleRegistrationFailure("init cloudchannel AliyunTokenMonitor failed with exception:" + e.getMessage(), PROVIDER_ALIYUN);
+                            }
+                        }
+                    }
+                }
+                Thread tokenMonitor = new Thread(new AliyunTokenMonitor());
+                tokenMonitor.start();
+            } catch (Exception e) {
+                handleRegistrationFailure("init cloudchannel failed with exception:" + e.getMessage(), PROVIDER_ALIYUN);
             }
-            @Override
-            public void onFailed(String errorCode, String errorMessage) {
-                handleRegistrationFailure("init cloudchannel failed -- errorcode:" + errorCode + " -- errorMessage:" + errorMessage, PROVIDER_ALIYUN);
-            }
-        });
+        }
     }
 
     public void sendRegistrationToken(String token, String provider) {
